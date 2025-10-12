@@ -39,7 +39,7 @@ def add_config(
 
     config = BaseUserConfigSource.prompt_config(config_type, prefilled)
 
-    with AppSettings.use(app_state.app_settings) as app_settings:
+    with AppSettings.use(app_state) as app_settings:
         if config.id in app_settings.user_config_sources:
             console.print(
                 f"[red]Error:[/red] Config source with ID '{config.id}' already exists. Remove it first with 'dotsync config remove {config.id}'."
@@ -68,7 +68,7 @@ def remove_config(
         console.print("Aborted.")
         raise typer.Exit(code=0)
 
-    with AppSettings.use(app_state.app_settings) as app_settings:
+    with AppSettings.use(app_state) as app_settings:
         config = app_settings.user_config_sources[resolved_config_id]
         config.root.before_remove()
         del app_settings.user_config_sources[resolved_config_id]
@@ -81,7 +81,7 @@ def remove_config(
 def list_configs(ctx: typer.Context):
     app_state = cast(AppState, ctx.obj)
 
-    with AppSettings.use(app_state.app_settings, save_on_exit=False) as app_settings:
+    with AppSettings.use(app_state, save_on_exit=False) as app_settings:
         if not app_settings.user_config_sources:
             console.print("No config sources found.")
             return

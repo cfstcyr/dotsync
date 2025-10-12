@@ -15,7 +15,7 @@ ConfigId = Annotated[
 def prompt_config_id(config_id: str | None, ctx: typer.Context) -> str:
     app_state: AppState = ctx.obj
 
-    with AppSettings.use(app_state.app_settings, save_on_exit=False) as app_settings:
+    with AppSettings.use(app_state, save_on_exit=False) as app_settings:
         if config_id is not None and config_id not in app_settings.user_config_sources:
             console.print(
                 f"[red]Error:[/red] No config source found with ID '{config_id}'."
