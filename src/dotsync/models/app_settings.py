@@ -5,8 +5,8 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
-from dotsync.models.app_settings.user_config_source import UserConfigSource
 from dotsync.models.app_state import AppState
+from dotsync.models.user_config_source.user_config_source import UserConfigSource
 from dotsync.utils.load_file import load_file
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ class AppSettings(BaseModel):
             yield app_settings
         finally:
             if save_on_exit:
-                app_settings.save(path, app_state)
+                app_settings.save(app_state)
 
     @classmethod
     def load_raw(cls, path: Path) -> dict:
@@ -48,11 +48,11 @@ class AppSettings(BaseModel):
     def load(cls, path: Path) -> "AppSettings":
         return cls.model_validate(cls.load_raw(path))
 
-    def save(self, path: Path, app_state: AppState) -> None:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("w", encoding="utf-8") as f:
+    def save(self, app_state: AppState) -> None:
+        app_state.app_settings.parent.mkdir(parents=True, exist_ok=True)
+        with app_state.app_settings.open("w", encoding="utf-8") as f:
             f.write(
                 f"# yaml-language-server: $schema={app_state.app_settings_schema_url}\n"
             )
             yaml.dump(self.model_dump(mode="json"), f)
-        logger.debug("Settings saved to %s", path)
+        logger.debug("Settings saved to %s", app_state.app_settings)

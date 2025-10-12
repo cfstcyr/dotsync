@@ -3,7 +3,7 @@ from pathlib import Path
 
 from deepdiff import DeepDiff
 
-from dotsync.models.app_settings.app_settings import AppSettings
+from dotsync.models.app_settings import AppSettings
 
 
 def update_schema(path: Path, model: type[AppSettings]):

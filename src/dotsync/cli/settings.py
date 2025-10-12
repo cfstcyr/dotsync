@@ -7,7 +7,7 @@ from rich.panel import Panel
 from rich.syntax import Syntax
 
 from dotsync.console import console
-from dotsync.models.app_settings.app_settings import AppSettings
+from dotsync.models.app_settings import AppSettings
 from dotsync.models.app_state import AppState
 
 settings_app = typer.Typer(name="settings", no_args_is_help=True)
@@ -65,4 +65,4 @@ def set_setting(
             OmegaConf.create(AppSettings.load_raw(app_state.app_settings)),
             OmegaConf.from_dotlist(set_attrs),
         )
-    ).save(app_state.app_settings)
+    ).save(app_state)

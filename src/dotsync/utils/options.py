@@ -4,7 +4,7 @@ import questionary
 import typer
 
 from dotsync.console import console
-from dotsync.models.app_settings.app_settings import AppSettings
+from dotsync.models.app_settings import AppSettings
 from dotsync.models.app_state import AppState
 
 ConfigId = Annotated[

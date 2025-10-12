@@ -6,12 +6,9 @@ from omegaconf import OmegaConf
 from rich.table import Table
 
 from dotsync.console import console
-from dotsync.models.app_settings.app_settings import AppSettings
-from dotsync.models.app_settings.user_config_source import (
-    BaseUserConfigSource,
-    UserConfigSource,
-)
+from dotsync.models.app_settings import AppSettings
 from dotsync.models.app_state import AppState
+from dotsync.models.user_config_source.user_config_source import UserConfigSource
 from dotsync.utils.options import ConfigId, prompt_config_id
 
 config_app = typer.Typer(name="config", no_args_is_help=True)
@@ -37,7 +34,8 @@ def add_config(
         dict[str, Any], OmegaConf.to_container(OmegaConf.from_dotlist(values))
     )
 
-    config = BaseUserConfigSource.prompt_config(config_type, prefilled)
+    variant = UserConfigSource.prompt_variant(config_type)
+    config = variant.prompt_config(prefilled)
 
     with AppSettings.use(app_state) as app_settings:
         if config.id in app_settings.user_config_sources:
