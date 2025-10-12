@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import questionary
 import typer
@@ -11,6 +11,9 @@ from rich.console import RenderableType
 
 from dotsync.console import console
 from dotsync.mixins.has_secrets_model import HasSecretsModel
+
+if TYPE_CHECKING:
+    from dotsync.models.app_settings import AppSettings
 from dotsync.models.user_config.user_config import UserConfig
 
 USER_CONFIG_SOURCE_DISCRIMINATOR = "source"
@@ -32,11 +35,11 @@ class BaseUserConfigSource(HasSecretsModel, BaseModel, ABC):
     def before_remove(self):
         self._delete_secrets(self.id)
 
-    def load(self) -> UserConfig:
-        return UserConfig.model_validate(self.load_raw())
+    def load(self, app_settings: "AppSettings") -> UserConfig:
+        return UserConfig.model_validate(self.load_raw(app_settings))
 
     @abstractmethod
-    def load_raw(self) -> dict[str, Any]: ...
+    def load_raw(self, app_settings: "AppSettings") -> dict[str, Any]: ...
 
     @abstractmethod
     def render_info(self) -> RenderableType: ...
