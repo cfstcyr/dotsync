@@ -1,9 +1,11 @@
+import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import questionary
 import typer
+from omegaconf import OmegaConf
 from pydantic import BaseModel, Field, SecretStr
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
@@ -17,6 +19,8 @@ if TYPE_CHECKING:
 from dotsync.models.user_config.user_config import UserConfig
 
 USER_CONFIG_SOURCE_DISCRIMINATOR = "source"
+
+logger = logging.getLogger(__name__)
 
 
 class BaseUserConfigSource(HasSecretsModel, BaseModel, ABC):
@@ -37,6 +41,22 @@ class BaseUserConfigSource(HasSecretsModel, BaseModel, ABC):
 
     def load(self, app_settings: "AppSettings") -> UserConfig:
         return UserConfig.model_validate(self.load_raw(app_settings))
+
+    def _load_configs_from_path(
+        self, path: Path, app_settings: "AppSettings"
+    ) -> dict[str, Any]:
+        cfg = OmegaConf.create()
+        expanded_path = path.expanduser().absolute()
+
+        for file in sorted(
+            f for g in app_settings.config_patterns for f in expanded_path.glob(g)
+        ):
+            if file.is_file():
+                cfg = OmegaConf.merge(cfg, OmegaConf.load(file))
+            else:
+                logger.debug("Skipping non-file: %s", file)
+
+        return cast(dict[str, Any], OmegaConf.to_container(cfg, resolve=True))
 
     @abstractmethod
     def load_raw(self, app_settings: "AppSettings") -> dict[str, Any]: ...

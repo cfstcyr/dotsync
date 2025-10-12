@@ -24,7 +24,7 @@ def sync_callback(
 
     with AppSettings.use(app_state, save_on_exit=False) as app_settings:
         for config_source in app_settings.user_config_sources.values():
-            config = config_source.root.load()
+            config = config_source.root.load(app_settings)
 
             results = config.sync(dry_run=dry_run)
 

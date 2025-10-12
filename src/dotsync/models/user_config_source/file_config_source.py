@@ -1,7 +1,6 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal
 
-from omegaconf import OmegaConf
 from pydantic import Field
 
 if TYPE_CHECKING:
@@ -23,12 +22,4 @@ class FileUserConfigSource(BaseUserConfigSource):
         return f"{self.path}"
 
     def load_raw(self, app_settings: "AppSettings") -> dict[str, Any]:
-        cfg = OmegaConf.create()
-        path = self.path.expanduser().absolute()
-
-        for file in sorted(
-            f for g in app_settings.config_patterns for f in path.glob(g)
-        ):
-            cfg = OmegaConf.merge(cfg, OmegaConf.load(file))
-
-        return cast(dict[str, Any], OmegaConf.to_container(cfg, resolve=True))
+        return self._load_configs_from_path(self.path, app_settings)

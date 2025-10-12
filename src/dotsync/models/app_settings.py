@@ -17,7 +17,7 @@ class AppSettings(BaseModel):
 
     user_config_sources: dict[str, UserConfigSource] = Field(default_factory=dict)
     config_patterns: list[str] = Field(
-        default_factory=lambda: [".config*", "config*", "dotsync*", ".sync*"],
+        default_factory=lambda: [".dotsync*", "dotsync*", ".sync*"],
     )
     app_settings_schema_url: str = Field(
         default="https://raw.githubusercontent.com/cfstcyr/dotsync/refs/heads/main/schemas/app_settings.schema.json",

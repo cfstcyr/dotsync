@@ -68,18 +68,25 @@
           "type": "string"
         },
         "username": {
-          "description": "Username for accessing the git repository",
+          "description": "Username for accessing the git repository (for GitHub, use your GitHub username)",
           "examples": [
             "gituser"
           ],
           "title": "Username",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path to clone the repository to",
+          "format": "path",
+          "title": "Path",
           "type": "string"
         }
       },
       "required": [
         "id",
         "repo_url",
-        "username"
+        "username",
+        "path"
       ],
       "title": "GitHttpUserConfigSource",
       "type": "object"
