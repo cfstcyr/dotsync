@@ -40,7 +40,7 @@ def add_config(
     with AppSettings.use(app_state) as app_settings:
         if config.id in app_settings.user_config_sources:
             console.print(
-                f"[red]Error:[/red] Config source with ID '{config.id}' already exists. Remove it first with 'dotsync config remove {config.id}'."
+                f"[red]Error:[/red] Config source with ID '{config.id}' already exists. Remove it first with 'dotsync config remove -i {config.id}'."
             )
             raise typer.Exit(code=1)
 

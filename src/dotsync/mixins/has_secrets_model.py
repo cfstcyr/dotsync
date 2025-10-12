@@ -3,6 +3,7 @@ from abc import abstractmethod
 import keyring
 from pydantic import BaseModel, SecretStr
 
+from dotsync.console import console
 from dotsync.constants import APP_NAME
 
 
@@ -45,4 +46,9 @@ class HasSecretsModel(BaseModel):
     @classmethod
     def _delete_secrets(cls, model_id: str):
         for name in cls.__get_secret_attribute_names__():
-            keyring.delete_password(model_id, cls._get_secret_id(model_id, name))
+            try:
+                keyring.delete_password(model_id, cls._get_secret_id(model_id, name))
+            except Exception:
+                console.print(
+                    f"[yellow]Warning:[/yellow] Failed to delete secret '{name}' for ID '{model_id}'"
+                )
