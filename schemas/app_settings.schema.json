@@ -111,6 +111,25 @@
       },
       "title": "User Config Sources",
       "type": "object"
+    },
+    "config_patterns": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Config Patterns",
+      "type": "array"
+    },
+    "app_settings_schema_url": {
+      "default": "https://raw.githubusercontent.com/cfstcyr/dotsync/refs/heads/main/schemas/app_settings.schema.json",
+      "description": "URL to the JSON schema for app settings",
+      "title": "App Settings Schema URL",
+      "type": "string"
+    },
+    "user_config_schema_url": {
+      "default": "https://raw.githubusercontent.com/cfstcyr/dotsync/refs/heads/main/schemas/user_config.schema.json",
+      "description": "URL to the JSON schema for user configs",
+      "title": "User Config Schema URL",
+      "type": "string"
     }
   },
   "title": "AppSettings",

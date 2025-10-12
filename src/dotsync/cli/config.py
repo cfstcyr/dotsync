@@ -37,7 +37,7 @@ def add_config(
     variant = UserConfigSource.prompt_variant(config_type)
     config = variant.prompt_config(prefilled)
 
-    with AppSettings.use(app_state) as app_settings:
+    with AppSettings.use(app_state, save_on_exit=True) as app_settings:
         if config.id in app_settings.user_config_sources:
             console.print(
                 f"[red]Error:[/red] Config source with ID '{config.id}' already exists. Remove it first with 'dotsync config remove -i {config.id}'."
@@ -66,7 +66,7 @@ def remove_config(
         console.print("Aborted.")
         raise typer.Exit(code=0)
 
-    with AppSettings.use(app_state) as app_settings:
+    with AppSettings.use(app_state, save_on_exit=True) as app_settings:
         config = app_settings.user_config_sources[resolved_config_id]
         config.root.before_remove()
         del app_settings.user_config_sources[resolved_config_id]

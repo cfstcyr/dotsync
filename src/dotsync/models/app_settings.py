@@ -16,10 +16,23 @@ class AppSettings(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     user_config_sources: dict[str, UserConfigSource] = Field(default_factory=dict)
+    config_patterns: list[str] = Field(
+        default_factory=lambda: [".config*", "config*", "dotsync*", ".sync*"],
+    )
+    app_settings_schema_url: str = Field(
+        default="https://raw.githubusercontent.com/cfstcyr/dotsync/refs/heads/main/schemas/app_settings.schema.json",
+        title="App Settings Schema URL",
+        description="URL to the JSON schema for app settings",
+    )
+    user_config_schema_url: str = Field(
+        default="https://raw.githubusercontent.com/cfstcyr/dotsync/refs/heads/main/schemas/user_config.schema.json",
+        title="User Config Schema URL",
+        description="URL to the JSON schema for user configs",
+    )
 
     @classmethod
     @contextmanager
-    def use(cls, app_state: AppState, *, save_on_exit: bool = True):
+    def use(cls, app_state: AppState, *, save_on_exit: bool):
         path = Path(app_state.app_settings).expanduser().resolve()
         app_settings = cls.load(path)
 
@@ -51,8 +64,6 @@ class AppSettings(BaseModel):
     def save(self, app_state: AppState) -> None:
         app_state.app_settings.parent.mkdir(parents=True, exist_ok=True)
         with app_state.app_settings.open("w", encoding="utf-8") as f:
-            f.write(
-                f"# yaml-language-server: $schema={app_state.app_settings_schema_url}\n"
-            )
+            f.write(f"# yaml-language-server: $schema={self.app_settings_schema_url}\n")
             yaml.dump(self.model_dump(mode="json"), f)
         logger.debug("Settings saved to %s", app_state.app_settings)

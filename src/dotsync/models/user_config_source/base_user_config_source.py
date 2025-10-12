@@ -11,6 +11,7 @@ from rich.console import RenderableType
 
 from dotsync.console import console
 from dotsync.mixins.has_secrets_model import HasSecretsModel
+from dotsync.models.user_config.user_config import UserConfig
 
 USER_CONFIG_SOURCE_DISCRIMINATOR = "source"
 
@@ -24,10 +25,6 @@ class BaseUserConfigSource(HasSecretsModel, BaseModel, ABC):
 
     __private_docs__: dict[str, str] = {}
 
-    @classmethod
-    def __get_secret_attribute_names__(cls) -> list[str]:
-        return list(cls.__private_attributes__.keys())
-
     def model_post_init(self, context: Any) -> None:
         self._load_secrets(self.id)
         return super().model_post_init(context)
@@ -35,8 +32,18 @@ class BaseUserConfigSource(HasSecretsModel, BaseModel, ABC):
     def before_remove(self):
         self._delete_secrets(self.id)
 
+    def load(self) -> UserConfig:
+        return UserConfig.model_validate(self.load_raw())
+
+    @abstractmethod
+    def load_raw(self) -> dict[str, Any]: ...
+
     @abstractmethod
     def render_info(self) -> RenderableType: ...
+
+    @classmethod
+    def __get_secret_attribute_names__(cls) -> list[str]:
+        return list(cls.__private_attributes__.keys())
 
     @classmethod
     def _prompt_field_from_name(cls, field_name: str) -> str:

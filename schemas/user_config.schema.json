@@ -1,0 +1,85 @@
+{
+  "$defs": {
+    "CopySingleUserConfig": {
+      "properties": {
+        "src": {
+          "format": "path",
+          "title": "Src",
+          "type": "string"
+        },
+        "dest": {
+          "format": "path",
+          "title": "Dest",
+          "type": "string"
+        },
+        "action": {
+          "const": "copy",
+          "title": "Action",
+          "type": "string"
+        }
+      },
+      "required": [
+        "src",
+        "dest",
+        "action"
+      ],
+      "title": "CopySingleUserConfig",
+      "type": "object"
+    },
+    "SymlinkSingleUserConfig": {
+      "properties": {
+        "src": {
+          "format": "path",
+          "title": "Src",
+          "type": "string"
+        },
+        "dest": {
+          "format": "path",
+          "title": "Dest",
+          "type": "string"
+        },
+        "action": {
+          "const": "symlink",
+          "title": "Action",
+          "type": "string"
+        }
+      },
+      "required": [
+        "src",
+        "dest",
+        "action"
+      ],
+      "title": "SymlinkSingleUserConfig",
+      "type": "object"
+    },
+    "UserConfig": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "discriminator": {
+              "mapping": {
+                "copy": "#/$defs/CopySingleUserConfig",
+                "symlink": "#/$defs/SymlinkSingleUserConfig"
+              },
+              "propertyName": "action"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/CopySingleUserConfig"
+              },
+              {
+                "$ref": "#/$defs/SymlinkSingleUserConfig"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/UserConfig"
+          }
+        ]
+      },
+      "title": "UserConfig",
+      "type": "object"
+    }
+  },
+  "$ref": "#/$defs/UserConfig"
+}
