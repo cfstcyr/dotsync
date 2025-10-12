@@ -7,6 +7,9 @@ help: ## Show this help.
 	@echo "Available targets:"
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_.-]+:.*##/ {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
 
+export_schemas:
+	$(EXECUTOR) python -m src.dotsync_scripts.export_schemas
+
 pc: pre-commit ## Run pre-commit on all files
 pre-commit:
 	$(EXECUTOR) pre-commit run --all-files $(ARGS)

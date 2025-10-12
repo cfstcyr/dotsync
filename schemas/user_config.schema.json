@@ -1,0 +1,39 @@
+{
+  "$defs": {
+    "SingleUserConfig": {
+      "properties": {
+        "src": {
+          "format": "path",
+          "title": "Src",
+          "type": "string"
+        },
+        "dest": {
+          "format": "path",
+          "title": "Dest",
+          "type": "string"
+        }
+      },
+      "required": [
+        "src",
+        "dest"
+      ],
+      "title": "SingleUserConfig",
+      "type": "object"
+    },
+    "UserConfig": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/SingleUserConfig"
+          },
+          {
+            "$ref": "#/$defs/UserConfig"
+          }
+        ]
+      },
+      "title": "UserConfig",
+      "type": "object"
+    }
+  },
+  "$ref": "#/$defs/UserConfig"
+}
