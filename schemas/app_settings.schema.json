@@ -1,0 +1,118 @@
+{
+  "$defs": {
+    "FileUserConfigSource": {
+      "properties": {
+        "id": {
+          "description": "Unique identifier for the config source",
+          "examples": [
+            "my_config_source"
+          ],
+          "title": "Config Source ID",
+          "type": "string"
+        },
+        "source": {
+          "const": "file",
+          "default": "file",
+          "title": "Source",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path to the configs directory",
+          "examples": [
+            "~/configs"
+          ],
+          "format": "path",
+          "title": "Configs Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "path"
+      ],
+      "title": "FileUserConfigSource",
+      "type": "object"
+    },
+    "GitHttpUserConfigSource": {
+      "properties": {
+        "id": {
+          "description": "Unique identifier for the config source",
+          "examples": [
+            "my_config_source"
+          ],
+          "title": "Config Source ID",
+          "type": "string"
+        },
+        "source": {
+          "const": "git-http",
+          "default": "git-http",
+          "title": "Source",
+          "type": "string"
+        },
+        "repo_url": {
+          "description": "URL of the git repository",
+          "examples": [
+            "https://github.com/user/repo.git"
+          ],
+          "title": "Repo URL",
+          "type": "string"
+        },
+        "branch": {
+          "default": "main",
+          "description": "Branch of the git repository",
+          "examples": [
+            "main",
+            "dev"
+          ],
+          "title": "Branch",
+          "type": "string"
+        },
+        "username": {
+          "description": "Username for accessing the git repository",
+          "examples": [
+            "gituser"
+          ],
+          "title": "Username",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "repo_url",
+        "username"
+      ],
+      "title": "GitHttpUserConfigSource",
+      "type": "object"
+    },
+    "UserConfigSource": {
+      "discriminator": {
+        "mapping": {
+          "file": "#/$defs/FileUserConfigSource",
+          "git-http": "#/$defs/GitHttpUserConfigSource"
+        },
+        "propertyName": "source"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/FileUserConfigSource"
+        },
+        {
+          "$ref": "#/$defs/GitHttpUserConfigSource"
+        }
+      ],
+      "title": "UserConfigSource"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "user_config_sources": {
+      "additionalProperties": {
+        "$ref": "#/$defs/UserConfigSource"
+      },
+      "title": "User Config Sources",
+      "type": "object"
+    }
+  },
+  "title": "AppSettings",
+  "type": "object"
+}

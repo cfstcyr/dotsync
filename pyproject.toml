@@ -1,0 +1,54 @@
+[project]
+name = "dotsync"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "keyring>=25.6.0",
+    "omegaconf>=2.3.0",
+    "pydantic>=2.12.0",
+    "python-dotenv>=1.1.1",
+    "questionary>=2.1.1",
+    "rich>=14.2.0",
+    "toml>=0.10.2",
+    "typer>=0.19.2",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.22,<0.9.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    { include-group = "lint" },
+    "pre-commit>=4.3.0",
+    "deepdiff>=8.6.1",
+]
+lint = [
+    "ruff>=0.14.0",
+]
+
+[project.scripts]
+dotsync = "dotsync.__main__:main"
+".s" = "dotsync.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+include = ["src/**/*.py", "tests/**/*.py"]
+
+[tool.ruff.lint]
+preview = true
+extend-select = ["S", "I", "FBT", "A", "COM", "DTZ", "ISC", "LOG", "G", "PIE", "T20", "PT", "RET", "SIM", "TID", "PTH", "UP", "DOC"]
+ignore = ["COM812"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"src".msg = "Do not use src imports. Imports are relative to the src directory and should not include the 'src.' prefix."
+
+[tool.ruff.format]
+docstring-code-format = true
