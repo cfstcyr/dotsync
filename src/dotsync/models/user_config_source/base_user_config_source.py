@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
 
-import keyring
 import questionary
 import typer
 from pydantic import BaseModel, Field, SecretStr
@@ -11,46 +10,33 @@ from pydantic_core import PydanticUndefined
 from rich.console import RenderableType
 
 from dotsync.console import console
-from dotsync.constants import APP_NAME
+from dotsync.mixins.has_secrets_model import HasSecretsModel
 
 USER_CONFIG_SOURCE_DISCRIMINATOR = "source"
 
 
-class BaseUserConfigSource(BaseModel, ABC):
+class BaseUserConfigSource(HasSecretsModel, BaseModel, ABC):
     id: str = Field(
         title="Config Source ID",
         description="Unique identifier for the config source",
         examples=["my_config_source"],
     )
 
+    __private_docs__: dict[str, str] = {}
+
+    @classmethod
+    def __get_secret_attribute_names__(cls) -> list[str]:
+        return list(cls.__private_attributes__.keys())
+
+    def model_post_init(self, context: Any) -> None:
+        self._load_secrets(self.id)
+        return super().model_post_init(context)
+
     def before_remove(self):
-        pass
+        self._delete_secrets(self.id)
 
     @abstractmethod
     def render_info(self) -> RenderableType: ...
-
-    @classmethod
-    def _get_secret_id(cls, item_id: str, field_id: str) -> str:
-        return f"{cls.__name__}-{item_id}-{field_id}"
-
-    @classmethod
-    def _save_secret(cls, secret_id: str, secret: SecretStr | str):
-        keyring.set_password(
-            APP_NAME,
-            secret_id,
-            secret.get_secret_value() if isinstance(secret, SecretStr) else secret,
-        )
-
-    @classmethod
-    def _get_secret(cls, secret_id: str) -> SecretStr:
-        value = keyring.get_password(APP_NAME, secret_id)
-
-        if value is None:
-            raise ValueError(
-                f"No secret found for ID '{secret_id}' in '{cls.__name__}'"
-            )
-
-        return SecretStr(value)
 
     @classmethod
     def _prompt_field_from_name(cls, field_name: str) -> str:
@@ -104,6 +90,26 @@ class BaseUserConfigSource(BaseModel, ABC):
                 if name in prefilled
                 else cls._prompt_field_from_name(name)
             )
+
+        field_id = field_values["id"]
+
+        for name in cls.__get_secret_attribute_names__():
+            field_name = name.lstrip("_")
+
+            field_value = (
+                prefilled[field_name]
+                if field_name in prefilled
+                else cls._prompt_field(
+                    field_name,
+                    FieldInfo(
+                        title=field_name.replace("_", " ").title(),
+                        description=cls.__private_docs__.get(name, None),
+                        annotation=SecretStr,
+                    ),
+                )
+            )
+
+            cls._set_secret(cls._get_secret_id(field_id, name), field_value)
 
         return field_values
 
