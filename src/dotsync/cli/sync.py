@@ -9,10 +9,10 @@ from dotsync.models.app_state import AppState
 
 logger = logging.getLogger(__name__)
 
-sync_app = typer.Typer(name="sync", no_args_is_help=True)
+sync_app = typer.Typer(name="sync", invoke_without_command=True)
 
 
-@sync_app.command("all")
+@sync_app.callback()
 def sync_callback(
     ctx: typer.Context,
     *,
