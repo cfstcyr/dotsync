@@ -6,6 +6,7 @@ import typer
 from dotsync.console import console
 from dotsync.models.app_settings import AppSettings
 from dotsync.models.app_state import AppState
+from dotsync.models.sync_result import SyncResults
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,8 @@ def sync_callback(
             "Found %d config sources to sync", len(app_settings.user_config_sources)
         )
 
+        all_results = SyncResults()
+
         for config_source_id, config_source in app_settings.user_config_sources.items():
             logger.info(
                 "Syncing config source '%s' (%s)",
@@ -40,8 +43,7 @@ def sync_callback(
             )
 
             config = config_source.root.load(app_settings)
+            all_results.extend(config.sync(dry_run=dry_run))
 
-            results = config.sync(dry_run=dry_run)
-
-            console.print(results.render_results())
-            console.print(results.render_summary())
+        console.print(all_results.render_results())
+        console.print(all_results.render_summary())
