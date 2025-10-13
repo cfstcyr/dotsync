@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -8,6 +9,8 @@ if TYPE_CHECKING:
 from dotsync.models.user_config_source.base_user_config_source import (
     BaseUserConfigSource,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class FileUserConfigSource(BaseUserConfigSource):
@@ -22,4 +25,7 @@ class FileUserConfigSource(BaseUserConfigSource):
         return f"{self.path}"
 
     def load_raw(self, app_settings: "AppSettings") -> dict[str, Any]:
-        return self._load_configs_from_path(self.path, app_settings)
+        logger.info("Loading file config source '%s' from path: %s", self.id, self.path)
+        result = self._load_configs_from_path(self.path, app_settings)
+        logger.debug("Loaded %d config items from file source", len(result))
+        return result

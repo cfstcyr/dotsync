@@ -40,6 +40,7 @@ class BaseUserConfigSource(HasSecretsModel, BaseModel, ABC):
         self._delete_secrets(self.id)
 
     def load(self, app_settings: "AppSettings") -> UserConfig:
+        logger.debug("Loading user config for source '%s'", self.id)
         return UserConfig.model_validate(self.load_raw(app_settings))
 
     def _load_configs_from_path(
@@ -47,16 +48,24 @@ class BaseUserConfigSource(HasSecretsModel, BaseModel, ABC):
     ) -> dict[str, Any]:
         cfg = OmegaConf.create()
         expanded_path = path.expanduser().absolute()
+        logger.debug(
+            "Loading configs from path: %s with patterns: %s",
+            expanded_path,
+            app_settings.config_patterns,
+        )
 
         for file in sorted(
             f for g in app_settings.config_patterns for f in expanded_path.glob(g)
         ):
             if file.is_file():
+                logger.debug("Loading config file: %s", file)
                 cfg = OmegaConf.merge(cfg, OmegaConf.load(file))
             else:
                 logger.debug("Skipping non-file: %s", file)
 
-        return cast(dict[str, Any], OmegaConf.to_container(cfg, resolve=True))
+        result = cast(dict[str, Any], OmegaConf.to_container(cfg, resolve=True))
+        logger.debug("Loaded config with %d top-level keys", len(result))
+        return result
 
     @abstractmethod
     def load_raw(self, app_settings: "AppSettings") -> dict[str, Any]: ...
@@ -102,6 +111,7 @@ class BaseUserConfigSource(HasSecretsModel, BaseModel, ABC):
             value = questionary.text(query, instruction=instructions, **args).ask()
 
         if not value and field.default == PydanticUndefined and field.is_required():
+            logger.warning("Required field '%s' not provided", field_name)
             console.print(f"[red]Error:[/red] '{field_name}' is required")
             typer.Abort()
 
@@ -109,6 +119,9 @@ class BaseUserConfigSource(HasSecretsModel, BaseModel, ABC):
 
     @classmethod
     def _prompt_fields(cls, prefilled: dict[str, Any]):
+        logger.debug(
+            "Prompting for config fields (prefilled: %s)", list(prefilled.keys())
+        )
         field_values = {}
 
         for name in cls.model_fields:
@@ -122,6 +135,7 @@ class BaseUserConfigSource(HasSecretsModel, BaseModel, ABC):
             )
 
         field_id = field_values["id"]
+        logger.debug("Config ID set to: %s", field_id)
 
         for name in cls.__get_secret_attribute_names__():
             field_name = name.lstrip("_")
@@ -140,6 +154,7 @@ class BaseUserConfigSource(HasSecretsModel, BaseModel, ABC):
             )
 
             cls._set_secret(cls._get_secret_id(field_id, name), field_value)
+            logger.debug("Set secret for field: %s", field_name)
 
         return field_values
 

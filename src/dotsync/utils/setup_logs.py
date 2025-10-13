@@ -11,9 +11,12 @@ VERBOSITY_LEVELS = {
 
 
 def setup_logs(*, verbose_level: int) -> None:
-    logging.basicConfig(
-        level=VERBOSITY_LEVELS.get(verbose_level, logging.WARNING),
-        format="%(message)s",
-        datefmt="[%X]",
-        handlers=[RichHandler(console=Console(stderr=True), rich_tracebacks=True)],
+    # Disable all loggers by setting root logger to CRITICAL
+    logging.getLogger().setLevel(logging.CRITICAL)
+
+    # Enable only dotsync app loggers
+    app_logger = logging.getLogger("dotsync")
+    app_logger.setLevel(VERBOSITY_LEVELS.get(verbose_level, logging.WARNING))
+    app_logger.addHandler(
+        RichHandler(console=Console(stderr=True), rich_tracebacks=True)
     )

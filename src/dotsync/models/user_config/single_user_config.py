@@ -23,7 +23,9 @@ class BaseSingleUserConfig(BaseModel, BaseUserConfig):
         return super().model_post_init(context)
 
     def _check_src(self) -> SyncResults:
+        logger.debug("Checking source path: %s", self.src)
         if not self.src.exists():
+            logger.warning("Source path does not exist: %s", self.src)
             return SyncResults(
                 [
                     SyncResult(
@@ -34,16 +36,23 @@ class BaseSingleUserConfig(BaseModel, BaseUserConfig):
                     )
                 ]
             )
+        logger.debug("Source path exists: %s", self.src)
         return SyncResults()
 
     def _handle_existing_destination(
         self, *, dry_run: bool
     ) -> tuple[bool, SyncResult | None, bool]:
+        logger.debug("Checking destination: %s", self.dest)
         if not self.dest.exists():
+            logger.debug("Destination does not exist: %s", self.dest)
             return True, None, False
 
+        logger.info("Destination exists: %s", self.dest)
         if not confirm(f"Destination {self.dest} exists. Overwrite?").ask():
             dest_type = "directory" if self.dest.is_dir() else "file"
+            logger.info(
+                "User chose not to overwrite existing %s: %s", dest_type, self.dest
+            )
             return (
                 False,
                 SyncResult(
@@ -67,16 +76,27 @@ class BaseSingleUserConfig(BaseModel, BaseUserConfig):
     def _ensure_parent_dir(self, *, dry_run: bool) -> None:
         """Ensure parent directory exists"""
         parent_dir = self.dest.parent
+        logger.debug("Ensuring parent directory exists: %s", parent_dir)
         if not parent_dir.exists():
             logger.debug("Creating parent directory %s", parent_dir)
             if not dry_run:
                 parent_dir.mkdir(parents=True, exist_ok=True)
+        else:
+            logger.debug("Parent directory already exists: %s", parent_dir)
 
 
 class CopySingleUserConfig(BaseSingleUserConfig):
     action: Literal["copy"]
 
     def sync(self, *, dry_run: bool) -> SyncResults:
+        logger.info(
+            "Starting %s sync: %s -> %s (dry_run=%s)",
+            self.action,
+            self.src,
+            self.dest,
+            dry_run,
+        )
+
         if check_src_result := self._check_src():
             return check_src_result
 
@@ -88,11 +108,16 @@ class CopySingleUserConfig(BaseSingleUserConfig):
         raise ValueError("Source must be a file or directory")
 
     def _check_copy_exists(self) -> SyncResult | None:
+        logger.debug("Checking if copy already exists at destination: %s", self.dest)
         if not self.dest.exists():
+            logger.debug("Destination does not exist, proceeding with copy")
             return None
 
         # Check for type mismatch
         if self.src.is_file() and self.dest.is_dir():
+            logger.warning(
+                "Cannot copy file to directory location: %s -> %s", self.src, self.dest
+            )
             return SyncResult(
                 status=SyncStatus.ERROR,
                 src=self.src,
@@ -100,6 +125,9 @@ class CopySingleUserConfig(BaseSingleUserConfig):
                 message="Cannot copy file to directory location",
             )
         if self.src.is_dir() and self.dest.is_file():
+            logger.warning(
+                "Cannot copy directory to file location: %s -> %s", self.src, self.dest
+            )
             return SyncResult(
                 status=SyncStatus.ERROR,
                 src=self.src,
@@ -129,18 +157,25 @@ class CopySingleUserConfig(BaseSingleUserConfig):
             elif self.src.is_dir() and self.dest.is_dir():
                 # For directories, could implement more sophisticated comparison
                 # For now, just skip the check and always copy
-                pass
-        except OSError:
+                logger.debug(
+                    "Directory exists at destination, will overwrite: %s", self.dest
+                )
+        except OSError as e:
+            logger.debug("Could not stat files for comparison: %s", e)
             # If we can't stat, assume they don't match
-            pass
 
+        logger.debug("Destination exists but does not match source, will copy")
         return None
 
     def _create_copy_file(self, *, dry_run: bool) -> SyncResult:
+        logger.debug(
+            "Copying file: %s -> %s (dry_run=%s)", self.src, self.dest, dry_run
+        )
         if not dry_run:
             try:
                 shutil.copy2(self.src, self.dest)
             except OSError as e:
+                logger.error("Failed to copy file %s -> %s: %s", self.src, self.dest, e)
                 return SyncResult(
                     status=SyncStatus.ERROR,
                     src=self.src,
@@ -155,10 +190,16 @@ class CopySingleUserConfig(BaseSingleUserConfig):
         )
 
     def _create_copy_dir(self, *, dry_run: bool) -> SyncResult:
+        logger.debug(
+            "Copying directory: %s -> %s (dry_run=%s)", self.src, self.dest, dry_run
+        )
         if not dry_run:
             try:
                 shutil.copytree(self.src, self.dest, dirs_exist_ok=False)
             except (OSError, shutil.Error) as e:
+                logger.error(
+                    "Failed to copy directory %s -> %s: %s", self.src, self.dest, e
+                )
                 return SyncResult(
                     status=SyncStatus.ERROR,
                     src=self.src,
@@ -219,6 +260,14 @@ class SymlinkSingleUserConfig(BaseSingleUserConfig):
     action: Literal["symlink"]
 
     def sync(self, *, dry_run: bool) -> SyncResults:
+        logger.info(
+            "Starting %s sync: %s -> %s (dry_run=%s)",
+            self.action,
+            self.src,
+            self.dest,
+            dry_run,
+        )
+
         if check_src_result := self._check_src():
             return check_src_result
 
@@ -232,11 +281,18 @@ class SymlinkSingleUserConfig(BaseSingleUserConfig):
         raise ValueError("Source must be a file or directory")
 
     def _check_symlink_exists(self) -> SyncResult | None:
+        logger.debug("Checking if symlink already exists at destination: %s", self.dest)
         if not self.dest.exists():
+            logger.debug("Destination does not exist, proceeding with symlink creation")
             return None
 
         # Check for type mismatch - symlinks should point to same type
         if self.src.is_file() and self.dest.is_dir():
+            logger.warning(
+                "Cannot create file symlink at directory location: %s -> %s",
+                self.src,
+                self.dest,
+            )
             return SyncResult(
                 status=SyncStatus.ERROR,
                 src=self.src,
@@ -244,6 +300,11 @@ class SymlinkSingleUserConfig(BaseSingleUserConfig):
                 message="Cannot create file symlink at directory location",
             )
         if self.src.is_dir() and self.dest.is_file():
+            logger.warning(
+                "Cannot create directory symlink at file location: %s -> %s",
+                self.src,
+                self.dest,
+            )
             return SyncResult(
                 status=SyncStatus.ERROR,
                 src=self.src,
@@ -261,9 +322,13 @@ class SymlinkSingleUserConfig(BaseSingleUserConfig):
                 dest=self.dest,
                 message="Symlink already exists and points to the correct source",
             )
+        logger.debug("Symlink exists but does not point to correct source")
         return None
 
     def _create_symlink(self, *, dry_run: bool) -> SyncResult:
+        logger.debug(
+            "Creating symlink: %s -> %s (dry_run=%s)", self.src, self.dest, dry_run
+        )
         # Check for circular symlink when creating directory symlinks
         if self.src.is_dir() and self.dest.exists():
             try:
@@ -271,20 +336,30 @@ class SymlinkSingleUserConfig(BaseSingleUserConfig):
                 dest_resolved = self.dest.resolve()
                 src_resolved = self.src.resolve()
                 if dest_resolved.is_relative_to(src_resolved):
+                    logger.error(
+                        "Cannot create symlink: destination %s is inside source directory %s",
+                        self.dest,
+                        self.src,
+                    )
                     return SyncResult(
                         status=SyncStatus.ERROR,
                         src=self.src,
                         dest=self.dest,
                         message="Cannot create symlink: destination is inside source directory",
                     )
-            except OSError:
+            except OSError as e:
+                logger.debug(
+                    "Could not resolve paths for circular symlink check: %s", e
+                )
                 # If we can't resolve paths, continue (might be cross-filesystem)
-                pass
 
         if not dry_run:
             try:
                 self.dest.symlink_to(self.src)
             except OSError as e:
+                logger.error(
+                    "Failed to create symlink %s -> %s: %s", self.src, self.dest, e
+                )
                 return SyncResult(
                     status=SyncStatus.ERROR,
                     src=self.src,
@@ -341,11 +416,13 @@ class SymlinkSingleUserConfig(BaseSingleUserConfig):
         return SyncResults([result])
 
     def _remove_broken_symlink(self, *, dry_run: bool) -> bool:
+        logger.debug("Checking for broken symlink at: %s", self.dest)
         if Path(self.dest).is_symlink() and not self.dest.exists():
-            logger.debug("Removing broken symlink at %s", self.dest)
+            logger.info("Removing broken symlink at %s", self.dest)
             if not dry_run:
                 self.dest.unlink()
             return True
+        logger.debug("No broken symlink found at: %s", self.dest)
         return False
 
 

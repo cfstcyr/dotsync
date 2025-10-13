@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 from urllib.parse import urlparse
@@ -13,6 +14,8 @@ if TYPE_CHECKING:
 from dotsync.models.user_config_source.base_user_config_source import (
     BaseUserConfigSource,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class GitHttpUserConfigSource(BaseUserConfigSource):
@@ -94,48 +97,82 @@ class GitHttpUserConfigSource(BaseUserConfigSource):
 
     def load_raw(self, app_settings: "AppSettings") -> dict[str, Any]:
         local_path = self.path.expanduser().absolute()
+        logger.info(
+            "Loading git config source '%s' from %s (branch: %s)",
+            self.id,
+            self.repo_url,
+            self.branch,
+        )
 
         try:
             if not local_path.exists():
+                logger.info("Repository not cloned yet, cloning to %s", local_path)
                 self._clone_repo(local_path)
             else:
+                logger.info("Repository exists, pulling latest changes")
                 self._pull_repo(local_path)
         except Exception as e:
+            logger.error("Failed to sync repository %s: %s", self.repo_url, e)
             raise ValueError(f"Failed to sync repository {self.repo_url}: {e}") from e
 
+        logger.debug("Loading configs from git repository at %s", local_path)
         return self._load_configs_from_path(local_path, app_settings)
 
     def _build_auth_url(self) -> str:
         parsed = urlparse(self.repo_url)
+        auth_url = (
+            f"{parsed.scheme}://{self.username}:[REDACTED]@{parsed.netloc}{parsed.path}"
+        )
+        logger.debug("Built auth URL: %s", auth_url)
         return f"{parsed.scheme}://{self.username}:{self._password.get_secret_value()}@{parsed.netloc}{parsed.path}"
 
     def _clone_repo(self, local_path: Path) -> None:
+        logger.debug("Building auth URL for cloning repository")
         try:
             auth_url = self._build_auth_url()
+            logger.info(
+                "Cloning repository %s (branch: %s) to %s",
+                self.repo_url,
+                self.branch,
+                local_path,
+            )
             git.Repo.clone_from(auth_url, local_path, branch=self.branch)
+            logger.info("Successfully cloned repository")
         except GitCommandError as e:
+            logger.error("Git clone failed for %s: %s", self.repo_url, e)
             self._handle_git_auth_error(e)
             raise ValueError(
                 f"Failed to clone repository {self.repo_url} (branch: {self.branch}): {e}"
             ) from e
         except Exception as e:
+            logger.error("Unexpected error during clone: %s", e)
             raise ValueError(f"Unexpected error cloning repository: {e}") from e
 
     def _pull_repo(self, local_path: Path) -> None:
+        logger.debug("Setting remote auth URL for pull operation")
         try:
             repo = git.Repo(local_path)
             # For pull operations, we need to set the remote URL with auth
             self._set_remote_auth_url(repo)
             origin = repo.remote(self.__REMOTE_NAME__)
+            logger.info(
+                "Pulling latest changes from %s (branch: %s)",
+                self.repo_url,
+                self.branch,
+            )
             origin.pull(self.branch)
+            logger.info("Successfully pulled latest changes")
         except InvalidGitRepositoryError as e:
+            logger.error("Invalid git repository at %s: %s", local_path, e)
             raise ValueError(
                 f"Directory {local_path} is not a valid git repository: {e}"
             ) from e
         except GitCommandError as e:
+            logger.error("Git pull failed for %s: %s", self.repo_url, e)
             self._handle_git_auth_error(e)
             raise ValueError(
                 f"Failed to pull from repository {self.repo_url} (branch: {self.branch}): {e}"
             ) from e
         except Exception as e:
+            logger.error("Unexpected error during pull: %s", e)
             raise ValueError(f"Unexpected error pulling repository: {e}") from e

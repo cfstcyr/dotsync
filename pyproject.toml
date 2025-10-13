@@ -32,7 +32,7 @@ lint = [
 
 [project.scripts]
 dotsync = "dotsync.__main__:main"
-".s" = "dotsync.__main__:main"
+".sync" = "dotsync.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
