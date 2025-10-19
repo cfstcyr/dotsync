@@ -4,6 +4,7 @@ import typer
 from omegaconf import OmegaConf
 from pydantic import ValidationError
 from pydantic_core import PydanticUndefined
+from rich.panel import Panel
 from rich.table import Table
 
 from dotsync.console import console
@@ -13,7 +14,7 @@ from dotsync.models.app_state import AppState
 settings_app = typer.Typer(help="Manage DotSync settings.")
 
 
-@settings_app.command("reset")
+@settings_app.command("reset", help="Reset application settings to defaults.")
 def reset_settings(
     ctx: typer.Context,
 ):
@@ -25,11 +26,12 @@ def reset_settings(
     typer.echo(f"Settings reset to default and saved to {app_state.app_settings_path}")
 
 
-@settings_app.command("set")
+@settings_app.command("set", help="Set application settings.")
 def set_settings(
     ctx: typer.Context,
     settings: list[str] = typer.Argument(
-        ..., help="Settings to set in 'key=value' format"
+        ...,
+        help="Settings to set in 'key=value' format. Example: sync_config_patterns='[\"*.yaml\"]'",
     ),
 ):
     app_state = cast(AppState, ctx.obj)
@@ -45,11 +47,11 @@ def set_settings(
         app_state.app_settings = new_app_settings
         typer.echo(f"Settings updated and saved to {app_state.app_settings_path}")
     except ValidationError as e:
-        typer.echo(f"Invalid settings: {e}", err=True)
+        console.print(Panel(f"[red]{e}[/red]", title="Validation Error"))
         raise typer.Exit(1)
 
 
-@settings_app.command("info")
+@settings_app.command("info", help="Display current application settings.")
 def info_settings(
     ctx: typer.Context,
 ):

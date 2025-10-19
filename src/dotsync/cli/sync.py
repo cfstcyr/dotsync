@@ -5,6 +5,7 @@ from typing import Annotated, cast
 import questionary
 import typer
 import yaml
+from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from dotsync.console import console
 from dotsync.models.app_state import AppState
@@ -13,14 +14,19 @@ from dotsync.models.sync_config.sync_config import SyncConfig
 
 logger = logging.getLogger(__name__)
 
-sync_app = typer.Typer()
+sync_app = typer.Typer(help="Sync dotfiles and configurations.")
 
 
 @sync_app.command("sync")
 def sync_command(
     ctx: typer.Context,
     *,
-    path: Annotated[Path, typer.Argument(..., help="Path to sync from")],
+    path: Annotated[
+        Path,
+        typer.Argument(
+            ..., help="Path to the directory containing sync configuration."
+        ),
+    ],
     dry_run: Annotated[
         bool,
         typer.Option(
@@ -33,7 +39,14 @@ def sync_command(
     sync_config = SyncConfig.load_path(
         path, patterns=app_state.app_settings.sync_config_patterns
     )
-    sync_results = sync_config.sync(dry_run=dry_run)
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task("Syncing configurations...", total=None)
+        sync_results = sync_config.sync(dry_run=dry_run)
+        progress.update(task, completed=True)
 
     console.print(sync_results.render_results())
     console.print(sync_results.render_summary())
@@ -44,7 +57,12 @@ def sync_command(
 def unsync_command(
     ctx: typer.Context,
     *,
-    path: Annotated[Path, typer.Argument(..., help="Path to unsync from")],
+    path: Annotated[
+        Path,
+        typer.Argument(
+            ..., help="Path to the directory containing sync configuration."
+        ),
+    ],
     dry_run: Annotated[
         bool,
         typer.Option(
@@ -54,10 +72,23 @@ def unsync_command(
 ):
     app_state = cast(AppState, ctx.obj)
 
+    if (
+        not dry_run
+        and not questionary.confirm("This will unsync configurations. Continue?").ask()
+    ):
+        raise typer.Exit()
+
     sync_config = SyncConfig.load_path(
         path, patterns=app_state.app_settings.sync_config_patterns
     )
-    unsync_results = sync_config.unsync(dry_run=dry_run)
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task("Unsyncing configurations...", total=None)
+        unsync_results = sync_config.unsync(dry_run=dry_run)
+        progress.update(task, completed=True)
 
     console.print(unsync_results.render_results())
     console.print(unsync_results.render_summary())
@@ -68,7 +99,9 @@ def sync_init_command(
     ctx: typer.Context,
     path: Annotated[
         Path,
-        typer.Argument(..., help="Path to initialize sync"),
+        typer.Argument(
+            ..., help="Path to the directory to initialize with sync configuration."
+        ),
     ],
     *,
     render_unsync: Annotated[

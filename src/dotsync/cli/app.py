@@ -9,7 +9,11 @@ from dotsync.constants import APP_NAME
 from dotsync.models.app_state import AppState
 from dotsync.utils.setup_logs import setup_logs
 
-app = typer.Typer(no_args_is_help=True)
+app = typer.Typer(
+    no_args_is_help=True,
+    help="DotSync: Manage and sync your dotfiles across systems.",
+    epilog="Examples:\n  dotsync sync ~/my-dots\n  dotsync settings info",
+)
 
 app.add_typer(sync_app, name=None)
 app.add_typer(settings_app, name="settings")
@@ -24,7 +28,7 @@ def setup_app(
         Path,
         typer.Option(
             "--app-settings",
-            help="Path to the application settings file.",
+            help="Path to the application settings file. Defaults to app directory.",
             envvar="DOTSYNC_APP_SETTINGS",
             show_envvar=True,
             show_default=True,
@@ -34,7 +38,7 @@ def setup_app(
         list[str],
         typer.Option(
             "--with-setting",
-            help="Override application settings (in 'key=value' format). Can be specified multiple times.",
+            help="Override application settings (in 'key=value' format). Can be specified multiple times. Example: --with-setting sync_config_patterns='[\"*.yaml\"]'",
         ),
     ] = [],
     verbose: int = typer.Option(
@@ -44,7 +48,7 @@ def setup_app(
         count=True,
         min=0,
         max=3,
-        help="Increase verbosity (-v, -vv)",
+        help="Increase verbosity (-v for info, -vv for debug, -vvv for trace)",
     ),
 ):
     setup_logs(verbose_level=verbose)
