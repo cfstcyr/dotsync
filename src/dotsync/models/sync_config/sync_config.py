@@ -47,6 +47,8 @@ class SyncConfig(RootModel, BaseSyncConfig):
             for file in sorted(f for g in patterns for f in path.glob(g)):
                 if file.is_file():
                     cfg = OmegaConf.merge(cfg, OmegaConf.load(file))
+            else:
+                logger.warning("No config files found in directory: %s", path)
 
         result = cls.model_validate(OmegaConf.to_container(cfg, resolve=True))
         logger.debug("Loaded SyncConfig with %d root keys", len(result.root))
