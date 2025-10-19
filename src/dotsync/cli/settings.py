@@ -11,7 +11,7 @@ from dotsync.console import console
 from dotsync.models.app_settings import AppSettings
 from dotsync.models.app_state import AppState
 
-settings_app = typer.Typer(help="Manage DotSync settings.")
+settings_app = typer.Typer(help="Manage DotSync settings.", no_args_is_help=True)
 
 
 @settings_app.command("reset", help="Reset application settings to defaults.")

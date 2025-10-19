@@ -5,6 +5,7 @@ import typer
 
 from dotsync.cli.settings import settings_app
 from dotsync.cli.sync import sync_app
+from dotsync.cli.utils import utils_app
 from dotsync.constants import APP_NAME
 from dotsync.models.app_state import AppState
 from dotsync.utils.setup_logs import setup_logs
@@ -18,6 +19,7 @@ app = typer.Typer(
 app.add_typer(sync_app, name=None)
 app.add_typer(settings_app, name="settings")
 app.add_typer(settings_app, name="setting", hidden=True)
+app.add_typer(utils_app, name="utils")
 
 
 @app.callback()
