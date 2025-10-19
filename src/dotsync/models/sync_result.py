@@ -12,12 +12,14 @@ class SyncStatus(Enum):
     SKIPPED = "Skipped"
     ERROR = "Error"
     NO_ACTION = "No Action"
+    REMOVED = "Removed"
 
     __STYLES__ = {
         CREATED: "green",
         SKIPPED: "yellow",
         ERROR: "red",
         NO_ACTION: "blue",
+        REMOVED: "magenta",
     }
 
 
@@ -46,7 +48,8 @@ class SyncResults(list[SyncResult]):
             f"[green]Created:[/green] {counts[SyncStatus.CREATED]}\n"
             f"[yellow]Skipped:[/yellow] {counts[SyncStatus.SKIPPED]}\n"
             f"[red]Error:[/red] {counts[SyncStatus.ERROR]}\n"
-            f"[blue]No Action:[/blue] {counts[SyncStatus.NO_ACTION]}",
+            f"[blue]No Action:[/blue] {counts[SyncStatus.NO_ACTION]}\n"
+            f"[magenta]Removed:[/magenta] {counts[SyncStatus.REMOVED]}",
             title="Sync Summary",
             expand=False,
         )

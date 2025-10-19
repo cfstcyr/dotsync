@@ -2,7 +2,7 @@
   "additionalProperties": false,
   "properties": {
     "default_sync_config_filename": {
-      "default": ".sync",
+      "default": ".sync.yaml",
       "description": "Default filename for sync configuration files",
       "title": "Default Sync Config Filename",
       "type": "string"

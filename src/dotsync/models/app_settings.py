@@ -16,7 +16,7 @@ class AppSettings(BaseModel):
     _app_settings_path: Path = PrivateAttr()
 
     default_sync_config_filename: str = Field(
-        default=".sync",
+        default=".sync.yaml",
         title="Default Sync Config Filename",
         description="Default filename for sync configuration files",
     )

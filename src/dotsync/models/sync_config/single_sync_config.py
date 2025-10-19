@@ -255,6 +255,34 @@ class CopySingleSyncConfig(BaseSingleSyncConfig):
 
         return SyncResults([result])
 
+    def unsync(self, *, dry_run: bool) -> SyncResults:
+        if self.dest.exists():
+            if not dry_run:
+                if self.dest.is_file():
+                    self.dest.unlink()
+                elif self.dest.is_dir():
+                    shutil.rmtree(self.dest)
+            return SyncResults(
+                [
+                    SyncResult(
+                        status=SyncStatus.REMOVED,
+                        src=self.src,
+                        dest=self.dest,
+                        message="Copied file/directory removed",
+                    )
+                ]
+            )
+        return SyncResults(
+            [
+                SyncResult(
+                    status=SyncStatus.SKIPPED,
+                    src=self.src,
+                    dest=self.dest,
+                    message="Destination does not exist",
+                )
+            ]
+        )
+
 
 class SymlinkSingleSyncConfig(BaseSingleSyncConfig):
     action: Literal["symlink"]
@@ -424,6 +452,31 @@ class SymlinkSingleSyncConfig(BaseSingleSyncConfig):
             return True
         logger.debug("No broken symlink found at: %s", self.dest)
         return False
+
+    def unsync(self, *, dry_run: bool) -> SyncResults:
+        if self.dest.is_symlink() and self.dest.readlink() == self.src:
+            if not dry_run:
+                self.dest.unlink()
+            return SyncResults(
+                [
+                    SyncResult(
+                        status=SyncStatus.REMOVED,
+                        src=self.src,
+                        dest=self.dest,
+                        message="Symlink removed",
+                    )
+                ]
+            )
+        return SyncResults(
+            [
+                SyncResult(
+                    status=SyncStatus.SKIPPED,
+                    src=self.src,
+                    dest=self.dest,
+                    message="Destination is not a matching symlink",
+                )
+            ]
+        )
 
 
 SingleSyncConfig = Annotated[

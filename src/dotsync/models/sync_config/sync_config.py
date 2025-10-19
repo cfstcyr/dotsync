@@ -22,6 +22,14 @@ class SyncConfig(RootModel, BaseSyncConfig):
 
         return results
 
+    def unsync(self, *, dry_run: bool) -> SyncResults:
+        results = SyncResults()
+
+        for config in self.root.values():
+            results.extend(config.unsync(dry_run=dry_run))
+
+        return results
+
     @classmethod
     def load_path(cls, path: Path, patterns: list[str]) -> "SyncConfig":
         path = path.resolve()
