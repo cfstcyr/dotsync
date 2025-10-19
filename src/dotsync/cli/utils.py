@@ -2,6 +2,7 @@ from pathlib import Path
 from textwrap import indent
 from typing import Annotated
 
+import questionary
 import toml
 import typer
 
@@ -27,9 +28,11 @@ def create_script(
 ):
     path = path.resolve()
 
-    if path.exists():
-        console.print(f"[red]Error: File {path} already exists.[/red]")
-        raise typer.Exit(1)
+    if (
+        path.exists()
+        and not questionary.confirm(f"File {path} already exists. Overwrite?").ask()
+    ):
+        raise typer.Exit()
 
     config = {
         "requires-python": ">=3.12",
