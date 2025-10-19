@@ -6,13 +6,13 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Discriminator
 from questionary import confirm
 
+from dotsync.models.sync_config.base_sync_config import BaseSyncConfig
 from dotsync.models.sync_result import SyncResult, SyncResults, SyncStatus
-from dotsync.models.user_config.base_user_config import BaseUserConfig
 
 logger = logging.getLogger(__name__)
 
 
-class BaseSingleUserConfig(BaseModel, BaseUserConfig):
+class BaseSingleSyncConfig(BaseModel, BaseSyncConfig):
     src: Path
     dest: Path
 
@@ -85,7 +85,7 @@ class BaseSingleUserConfig(BaseModel, BaseUserConfig):
             logger.debug("Parent directory already exists: %s", parent_dir)
 
 
-class CopySingleUserConfig(BaseSingleUserConfig):
+class CopySingleSyncConfig(BaseSingleSyncConfig):
     action: Literal["copy"]
 
     def sync(self, *, dry_run: bool) -> SyncResults:
@@ -256,7 +256,7 @@ class CopySingleUserConfig(BaseSingleUserConfig):
         return SyncResults([result])
 
 
-class SymlinkSingleUserConfig(BaseSingleUserConfig):
+class SymlinkSingleSyncConfig(BaseSingleSyncConfig):
     action: Literal["symlink"]
 
     def sync(self, *, dry_run: bool) -> SyncResults:
@@ -426,7 +426,7 @@ class SymlinkSingleUserConfig(BaseSingleUserConfig):
         return False
 
 
-SingleUserConfig = Annotated[
-    CopySingleUserConfig | SymlinkSingleUserConfig,
+SingleSyncConfig = Annotated[
+    CopySingleSyncConfig | SymlinkSingleSyncConfig,
     Discriminator("action"),
 ]

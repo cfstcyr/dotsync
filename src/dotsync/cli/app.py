@@ -3,7 +3,6 @@ from typing import Annotated
 
 import typer
 
-from dotsync.cli.config import config_app
 from dotsync.cli.sync import sync_app
 from dotsync.constants import APP_NAME
 from dotsync.models.app_state import AppState
@@ -11,17 +10,15 @@ from dotsync.utils.setup_logs import setup_logs
 
 app = typer.Typer(no_args_is_help=True)
 
-app.add_typer(config_app)
-app.add_typer(sync_app)
-app.add_typer(sync_app, name="s", hidden=True)  # Alias for sync
+app.add_typer(sync_app, name=None)
 
 
 @app.callback()
-def cli(
+def setup_app(
     ctx: typer.Context,
     *,
     app_settings_path: Annotated[
-        str,
+        Path,
         typer.Option(
             "--app-settings",
             help="Path to the application settings file.",
@@ -29,18 +26,26 @@ def cli(
             show_envvar=True,
             show_default=True,
         ),
-    ] = typer.get_app_dir(APP_NAME) + "/settings.yaml",
+    ] = Path(typer.get_app_dir(APP_NAME)) / "settings.yaml",
+    app_settings_overrides: Annotated[
+        list[str],
+        typer.Option(
+            "--with-setting",
+            help="Override application settings (in 'key=value' format). Can be specified multiple times.",
+        ),
+    ] = [],
     verbose: int = typer.Option(
         0,
         "--verbose",
         "-v",
         count=True,
         min=0,
-        max=2,
+        max=3,
         help="Increase verbosity (-v, -vv)",
     ),
 ):
-    ctx.obj = AppState(
-        app_settings=Path(app_settings_path),
-    )
     setup_logs(verbose_level=verbose)
+    ctx.obj = AppState(
+        app_settings_path=app_settings_path.resolve(),
+        app_settings_overrides=app_settings_overrides,
+    )

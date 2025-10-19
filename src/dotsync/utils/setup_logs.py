@@ -4,9 +4,10 @@ from rich.console import Console
 from rich.logging import RichHandler
 
 VERBOSITY_LEVELS = {
-    0: logging.WARNING,
-    1: logging.INFO,
-    2: logging.DEBUG,
+    0: logging.ERROR,
+    1: logging.WARNING,
+    2: logging.INFO,
+    3: logging.DEBUG,
 }
 
 

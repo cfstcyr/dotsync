@@ -1,49 +1,95 @@
-import logging
+from enum import Enum
+from pathlib import Path
 from typing import Annotated, cast
 
+import toml
 import typer
+import yaml
 
 from dotsync.console import console
-from dotsync.models.app_settings import AppSettings
 from dotsync.models.app_state import AppState
-from dotsync.models.sync_result import SyncResults
+from dotsync.models.sync_config.single_sync_config import SymlinkSingleSyncConfig
+from dotsync.models.sync_config.sync_config import SyncConfig
 
-logger = logging.getLogger(__name__)
-
-sync_app = typer.Typer(name="sync", invoke_without_command=True)
+sync_app = typer.Typer()
 
 
-@sync_app.callback()
-def sync_callback(
+@sync_app.command("sync")
+def sync_command(
     ctx: typer.Context,
     *,
+    path: Annotated[Path, typer.Argument(..., help="Path to sync from")],
     dry_run: Annotated[
         bool,
         typer.Option(
-            "--dry-run", "-n", help="Perform a trial run with no changes made"
+            "--dry-run", "-n", help="Perform a dry run without making changes"
         ),
     ] = False,
 ):
     app_state = cast(AppState, ctx.obj)
 
-    logger.info("Starting sync operation (dry_run=%s)", dry_run)
+    sync_config = SyncConfig.load_path(
+        path, patterns=app_state.app_settings.sync_config_patterns
+    )
+    sync_results = sync_config.sync(dry_run=dry_run)
 
-    with AppSettings.use(app_state, save_on_exit=False) as app_settings:
-        logger.info(
-            "Found %d config sources to sync", len(app_settings.user_config_sources)
-        )
+    console.print(sync_results.render_results())
+    console.print(sync_results.render_summary())
+    # typer.echo(f"Syncing using method one at {path}...")
 
-        all_results = SyncResults()
 
-        for config_source_id, config_source in app_settings.user_config_sources.items():
-            logger.info(
-                "Syncing config source '%s' (%s)",
-                config_source_id,
-                config_source.root.source,
+class InitFileFormat(Enum):
+    YAML = "yaml"
+    TOML = "toml"
+    JSON = "json"
+
+
+@sync_app.command("init")
+def sync_init_command(
+    ctx: typer.Context,
+    path: Path = typer.Argument(..., help="Path to initialize sync"),
+    file_format: InitFileFormat = typer.Option(
+        InitFileFormat.YAML,
+        "--format",
+        "-f",
+        help="File format for the sync configuration",
+    ),
+):
+    app_state = cast(AppState, ctx.obj)
+    path = path.resolve()
+
+    sync_config = SyncConfig(
+        root={
+            "my-file": SymlinkSingleSyncConfig(
+                action="symlink",
+                src=Path("./my-file.txt"),
+                dest=Path.home() / "my-file.txt",
             )
+        }
+    )
 
-            config = config_source.root.load(app_settings)
-            all_results.extend(config.sync(dry_run=dry_run))
-
-        console.print(all_results.render_results())
-        console.print(all_results.render_summary())
+    match file_format:
+        case InitFileFormat.YAML:
+            config_path = path / (
+                app_state.app_settings.default_sync_config_filename + ".yaml"
+            )
+            with config_path.open("w") as f:
+                f.write(
+                    f"# yaml-language-server: $schema={app_state.app_settings.sync_config_schema_url}\n"
+                )
+                yaml.dump(sync_config.model_dump(mode="json"), f)
+        case InitFileFormat.TOML:
+            config_path = path / (
+                app_state.app_settings.default_sync_config_filename + ".toml"
+            )
+            with config_path.open("w") as f:
+                toml.dump(sync_config.model_dump(mode="json"), f)
+        case InitFileFormat.JSON:
+            config_path = path / (
+                app_state.app_settings.default_sync_config_filename + ".json"
+            )
+            with config_path.open("w") as f:
+                f.write(sync_config.model_dump_json(indent=4))
+        case _:
+            typer.echo(f"File format {file_format} not yet implemented.")
+            raise typer.Exit(code=1)

@@ -1,141 +1,35 @@
 {
-  "$defs": {
-    "FileUserConfigSource": {
-      "properties": {
-        "id": {
-          "description": "Unique identifier for the config source",
-          "examples": [
-            "my_config_source"
-          ],
-          "title": "Config Source ID",
-          "type": "string"
-        },
-        "source": {
-          "const": "file",
-          "default": "file",
-          "title": "Source",
-          "type": "string"
-        },
-        "path": {
-          "description": "Path to the configs directory",
-          "examples": [
-            "~/configs"
-          ],
-          "format": "path",
-          "title": "Configs Path",
-          "type": "string"
-        }
-      },
-      "required": [
-        "id",
-        "path"
-      ],
-      "title": "FileUserConfigSource",
-      "type": "object"
-    },
-    "GitHttpUserConfigSource": {
-      "properties": {
-        "id": {
-          "description": "Unique identifier for the config source",
-          "examples": [
-            "my_config_source"
-          ],
-          "title": "Config Source ID",
-          "type": "string"
-        },
-        "source": {
-          "const": "git-http",
-          "default": "git-http",
-          "title": "Source",
-          "type": "string"
-        },
-        "repo_url": {
-          "description": "URL of the git repository",
-          "examples": [
-            "https://github.com/user/repo.git"
-          ],
-          "title": "Repo URL",
-          "type": "string"
-        },
-        "branch": {
-          "default": "main",
-          "description": "Branch of the git repository",
-          "examples": [
-            "main",
-            "dev"
-          ],
-          "title": "Branch",
-          "type": "string"
-        },
-        "username": {
-          "description": "Username for accessing the git repository (for GitHub, use your GitHub username)",
-          "examples": [
-            "gituser"
-          ],
-          "title": "Username",
-          "type": "string"
-        },
-        "path": {
-          "description": "Path to clone the repository to",
-          "format": "path",
-          "title": "Path",
-          "type": "string"
-        }
-      },
-      "required": [
-        "id",
-        "repo_url",
-        "username",
-        "path"
-      ],
-      "title": "GitHttpUserConfigSource",
-      "type": "object"
-    },
-    "UserConfigSource": {
-      "discriminator": {
-        "mapping": {
-          "file": "#/$defs/FileUserConfigSource",
-          "git-http": "#/$defs/GitHttpUserConfigSource"
-        },
-        "propertyName": "source"
-      },
-      "oneOf": [
-        {
-          "$ref": "#/$defs/FileUserConfigSource"
-        },
-        {
-          "$ref": "#/$defs/GitHttpUserConfigSource"
-        }
-      ],
-      "title": "UserConfigSource"
-    }
-  },
   "additionalProperties": false,
   "properties": {
-    "user_config_sources": {
-      "additionalProperties": {
-        "$ref": "#/$defs/UserConfigSource"
-      },
-      "title": "User Config Sources",
-      "type": "object"
+    "default_sync_config_filename": {
+      "default": ".sync",
+      "description": "Default filename for sync configuration files",
+      "title": "Default Sync Config Filename",
+      "type": "string"
     },
-    "config_patterns": {
+    "sync_config_patterns": {
       "items": {
         "type": "string"
       },
-      "title": "Config Patterns",
+      "title": "Sync Config Patterns",
       "type": "array"
     },
     "app_settings_schema_url": {
       "default": "https://raw.githubusercontent.com/cfstcyr/dotsync/refs/heads/main/schemas/app_settings.schema.json",
       "description": "URL to the JSON schema for app settings",
+      "format": "uri",
+      "maxLength": 2083,
+      "minLength": 1,
       "title": "App Settings Schema URL",
       "type": "string"
     },
-    "user_config_schema_url": {
-      "default": "https://raw.githubusercontent.com/cfstcyr/dotsync/refs/heads/main/schemas/user_config.schema.json",
-      "description": "URL to the JSON schema for user configs",
-      "title": "User Config Schema URL",
+    "sync_config_schema_url": {
+      "default": "https://raw.githubusercontent.com/cfstcyr/dotsync/refs/heads/main/schemas/sync_config.schema.json",
+      "description": "URL to the JSON schema for sync configs",
+      "format": "uri",
+      "maxLength": 2083,
+      "minLength": 1,
+      "title": "Sync Config Schema URL",
       "type": "string"
     }
   },
