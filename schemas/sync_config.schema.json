@@ -1,0 +1,85 @@
+{
+  "$defs": {
+    "CopySingleSyncConfig": {
+      "properties": {
+        "src": {
+          "format": "path",
+          "title": "Src",
+          "type": "string"
+        },
+        "dest": {
+          "format": "path",
+          "title": "Dest",
+          "type": "string"
+        },
+        "action": {
+          "const": "copy",
+          "title": "Action",
+          "type": "string"
+        }
+      },
+      "required": [
+        "src",
+        "dest",
+        "action"
+      ],
+      "title": "CopySingleSyncConfig",
+      "type": "object"
+    },
+    "SymlinkSingleSyncConfig": {
+      "properties": {
+        "src": {
+          "format": "path",
+          "title": "Src",
+          "type": "string"
+        },
+        "dest": {
+          "format": "path",
+          "title": "Dest",
+          "type": "string"
+        },
+        "action": {
+          "const": "symlink",
+          "title": "Action",
+          "type": "string"
+        }
+      },
+      "required": [
+        "src",
+        "dest",
+        "action"
+      ],
+      "title": "SymlinkSingleSyncConfig",
+      "type": "object"
+    },
+    "SyncConfig": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "discriminator": {
+              "mapping": {
+                "copy": "#/$defs/CopySingleSyncConfig",
+                "symlink": "#/$defs/SymlinkSingleSyncConfig"
+              },
+              "propertyName": "action"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/CopySingleSyncConfig"
+              },
+              {
+                "$ref": "#/$defs/SymlinkSingleSyncConfig"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/SyncConfig"
+          }
+        ]
+      },
+      "title": "SyncConfig",
+      "type": "object"
+    }
+  },
+  "$ref": "#/$defs/SyncConfig"
+}
