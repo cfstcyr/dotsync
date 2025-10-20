@@ -86,5 +86,5 @@ class AppSettings(BaseModel):
         app_settings_path.parent.mkdir(parents=True, exist_ok=True)
         with app_settings_path.open("w", encoding="utf-8") as f:
             f.write(f"# yaml-language-server: $schema={self.app_settings_schema_url}\n")
-            yaml.dump(self.model_dump(mode="json"), f)
+            yaml.dump(self.model_dump(mode="json", exclude_defaults=True), f)
         logger.debug("Settings saved to %s", app_settings_path)
