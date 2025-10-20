@@ -40,7 +40,7 @@ def setup_app(
         list[str],
         typer.Option(
             "--with-setting",
-            help="Override application settings (in 'key=value' format). Can be specified multiple times. Example: --with-setting sync_config_patterns='[\"*.yaml\"]'",
+            help="Override application settings (in 'key=value' format). Can be specified multiple times. Example: --with-setting sync_config_patterns='[\"*.yaml\"]' or --with-setting sync_config_patterns='*.yaml'",
         ),
     ] = [],
     verbose: int = typer.Option(

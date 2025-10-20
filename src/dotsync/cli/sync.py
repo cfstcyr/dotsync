@@ -37,7 +37,7 @@ def sync_command(
     app_state = cast(AppState, ctx.obj)
 
     sync_config = SyncConfig.load_path(
-        path, patterns=app_state.app_settings.sync_config_patterns
+        path, patterns=app_state.app_settings.sync_config_patterns_list
     )
     with Progress(
         SpinnerColumn(),
@@ -79,7 +79,7 @@ def unsync_command(
         raise typer.Exit()
 
     sync_config = SyncConfig.load_path(
-        path, patterns=app_state.app_settings.sync_config_patterns
+        path, patterns=app_state.app_settings.sync_config_patterns_list
     )
     with Progress(
         SpinnerColumn(),
@@ -127,7 +127,7 @@ def sync_init_command(
 
         # Always unsync existing configs before overwriting
         existing_config = SyncConfig.load_path(
-            path, app_state.app_settings.sync_config_patterns
+            path, app_state.app_settings.sync_config_patterns_list
         )
         unsync_results = existing_config.unsync(dry_run=False)
 

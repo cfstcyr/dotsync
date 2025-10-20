@@ -8,11 +8,18 @@
       "type": "string"
     },
     "sync_config_patterns": {
-      "items": {
-        "type": "string"
-      },
-      "title": "Sync Config Patterns",
-      "type": "array"
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "title": "Sync Config Patterns"
     },
     "app_settings_schema_url": {
       "default": "https://raw.githubusercontent.com/cfstcyr/dotsync/refs/heads/main/schemas/app_settings.schema.json",

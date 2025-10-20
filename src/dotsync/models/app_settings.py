@@ -20,7 +20,7 @@ class AppSettings(BaseModel):
         title="Default Sync Config Filename",
         description="Default filename for sync configuration files",
     )
-    sync_config_patterns: list[str] = Field(
+    sync_config_patterns: list[str] | str = Field(
         default_factory=lambda: [".dotsync*", "dotsync*", ".sync*"],
     )
     app_settings_schema_url: HttpUrl = Field(
@@ -37,6 +37,12 @@ class AppSettings(BaseModel):
         title="Sync Config Schema URL",
         description="URL to the JSON schema for sync configs",
     )
+
+    @property
+    def sync_config_patterns_list(self) -> list[str]:
+        if isinstance(self.sync_config_patterns, str):
+            return [self.sync_config_patterns]
+        return self.sync_config_patterns
 
     @contextmanager
     def edit(self):

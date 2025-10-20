@@ -31,7 +31,7 @@ def set_settings(
     ctx: typer.Context,
     settings: list[str] = typer.Argument(
         ...,
-        help="Settings to set in 'key=value' format. Example: sync_config_patterns='[\"*.yaml\"]'",
+        help="Settings to set in 'key=value' format. Example: sync_config_patterns='[\"*.yaml\"]' or sync_config_patterns='*.yaml'",
     ),
 ):
     app_state = cast(AppState, ctx.obj)
