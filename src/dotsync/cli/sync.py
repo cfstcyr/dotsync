@@ -26,7 +26,7 @@ def sync_command(
         typer.Argument(
             ..., help="Path to the directory containing sync configuration."
         ),
-    ],
+    ] = Path(),
     dry_run: Annotated[
         bool,
         typer.Option(
@@ -62,7 +62,7 @@ def unsync_command(
         typer.Argument(
             ..., help="Path to the directory containing sync configuration."
         ),
-    ],
+    ] = Path(),
     dry_run: Annotated[
         bool,
         typer.Option(
@@ -102,7 +102,7 @@ def sync_init_command(
         typer.Argument(
             ..., help="Path to the directory to initialize with sync configuration."
         ),
-    ],
+    ] = Path(),
     *,
     render_unsync: Annotated[
         bool,
